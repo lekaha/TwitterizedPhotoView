@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">TwitterizePhotoView</string>
+    <string name="twitterzied_image_showing_transition_name">TWITTERIZED_IMAGE</string>
+</resources>
