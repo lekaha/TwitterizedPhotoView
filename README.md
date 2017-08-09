@@ -49,7 +49,13 @@ ActivityCompat.startActivity(MainActivity.this, intent, options.toBundle());
 
 ```
 
+Sample
+=========
+![Sample screenshot1](/screenshots/show.gif)
+![Sample screenshot2](/screenshots/showing.png)
+
 License
 =========
 
 This library is licensed under the terms in the file named "LICENSE" for more detail.
+
