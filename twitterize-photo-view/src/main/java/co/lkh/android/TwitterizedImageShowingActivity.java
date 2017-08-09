@@ -1,5 +1,5 @@
 
-package co.lkh.android.view;
+package co.lkh.android;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -27,7 +27,7 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 
-import co.lkh.android.view.util.PaletteUtil;
+import co.lkh.android.util.PaletteUtil;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class TwitterizedImageShowingActivity extends AppCompatActivity {

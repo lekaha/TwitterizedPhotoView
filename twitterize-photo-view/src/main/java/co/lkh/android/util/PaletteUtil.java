@@ -1,4 +1,4 @@
-package co.lkh.android.view.util;
+package co.lkh.android.util;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;

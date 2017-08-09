@@ -9,10 +9,36 @@ buildscript {
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
 }
 def androidToolsVersion = '26.0.0'
 def supportLibraryVersion = '26.0.0'
+
+ext {
+    bintrayRepo = BINTRAY_REPO
+    bintrayName = NAME
+
+    publishedGroupId = GROUP
+    libraryName = NAME
+    artifact = BINTRAY_NAME
+
+    libraryDescription = POM_DESCRIPTION
+
+    siteUrl = POM_URL
+    gitUrl = POM_SCM_URL
+
+    libraryVersion = VERSION_NAME
+
+    developerId = POM_DEVELOPER_ID
+    developerName = POM_DEVELOPER_NAME
+    developerEmail = POM_DEVELOPER_EMAIL
+
+    licenseName = POM_LICENCE_NAME
+    licenseUrl = POM_LICENCE_URL
+    allLicenses = ["Apache-2.0"]
+}
 
 ext.deps = [
         support_compat: "com.android.support:support-compat:$supportLibraryVersion",
