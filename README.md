@@ -18,7 +18,7 @@ dependencies {
 Usage
 =========
 
-Passing the showing image's URL:
+- Passing the showing image's URL:
 
 ```java
 String transitionName = ViewCompat.getTransitionName(imageView);
@@ -33,7 +33,7 @@ ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimati
 ActivityCompat.startActivity(MainActivity.this, intent, options.toBundle());
 ```
 
-Passing the showing image's bitmap:
+- Passing the showing image's bitmap:
 
 ```java
 String transitionName = ViewCompat.getTransitionName(imageView);
