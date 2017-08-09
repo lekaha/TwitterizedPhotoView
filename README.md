@@ -52,7 +52,6 @@ ActivityCompat.startActivity(MainActivity.this, intent, options.toBundle());
 Sample
 =========
 ![Sample screenshot1](/screenshots/show.gif)
-![Sample screenshot2](/screenshots/showing.png)
 
 License
 =========
