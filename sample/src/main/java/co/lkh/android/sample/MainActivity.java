@@ -15,7 +15,7 @@ import co.lkh.android.TwitterizedImageShowingActivity;
 
 public class MainActivity extends AppCompatActivity {
     private final String DUMMY_IMAGE_URL = "http://lorempixel.com/400/200/sports/1/";
-    private final String DUMMY_IMAGE_URL_2 = "http://lorempixel.com/400/200/sports/2/";
+    private final String DUMMY_IMAGE_URL_2 = "http://lorempixel.com/400/200/sports/5/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
