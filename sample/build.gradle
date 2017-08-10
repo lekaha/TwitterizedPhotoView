@@ -30,5 +30,5 @@ dependencies {
 
     compile deps.glide
     annotationProcessor deps.glide_compile
-    compile project(path: ':twitterize-photo-view')
+    compile project(path: ':twitterized-photo-view')
 }

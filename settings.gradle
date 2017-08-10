@@ -1,1 +1,1 @@
-include ':sample', ':twitterize-photo-view'
+include ':sample', ':twitterized-photo-view'
