@@ -49,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 String transitionName = ViewCompat.getTransitionName(imageView2);
                 Intent intent = new Intent(MainActivity.this, TwitterizedImageShowingActivity.class);
+                intent.putExtra(TwitterizedImageShowingActivity.ARGS_BOTTOM_MENU_RES_ID,
+                        R.menu.navigation);
                 intent.putExtra(TwitterizedImageShowingActivity.ARGS_IMAGE_URL, DUMMY_IMAGE_URL_2);
                 intent.putExtra(TwitterizedImageShowingActivity.ARGS_TRANSITION_NAME,
                         transitionName);

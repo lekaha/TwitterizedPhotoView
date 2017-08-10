@@ -11,7 +11,7 @@ Download
 Use Gradle:
 ```
 dependencies {
-  compile 'com.lkh.android:twitterize-photo-view:0.0.1'
+  compile 'com.lkh.android:twitterize-photo-view:0.0.3'
 }
 ```
     

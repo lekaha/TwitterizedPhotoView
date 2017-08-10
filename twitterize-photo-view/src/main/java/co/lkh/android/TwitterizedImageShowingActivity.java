@@ -1,6 +1,9 @@
 
 package co.lkh.android;
 
+import android.animation.Animator;
+import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -11,12 +14,16 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GestureDetectorCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.transition.Fade;
 import android.transition.Transition;
 import android.view.GestureDetector;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,14 +37,22 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import co.lkh.android.util.PaletteUtil;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-public class TwitterizedImageShowingActivity extends AppCompatActivity {
+public class TwitterizedImageShowingActivity extends AppCompatActivity
+        implements BottomNavigationView.OnNavigationItemSelectedListener {
     public final static String ARGS_IMAGE_URL = "ARGS_IMAGE_URL";
     public final static String ARGS_IMAGE_BITMAP = "ARGS_IMAGE_BITMAP";
     public final static String ARGS_TRANSITION_NAME = "ARGS_TRANSITION_NAME";
     public final static String ARGS_TRANSITION_BEFORE_BACKGROUND_COLOR
         = "ARGS_TRANSITION_BEFORE_BACKGROUND_COLOR";
-    public final static int TRANSITION_DURATION = 200;
-    public final static int BACKGROUND_TRANSITION_DURATION = 200;
+    public final static String ARGS_BOTTOM_MENU_RES_ID = "ARGS_BOTTOM_MENU_RES_ID";
+
+    public final static String ACTION_NAVIGATION_CLICKED = "ACTION_NAVIGATION_CLICKED";
+    public final static String EXTRA_NAVIGATION_ITEM_ID = "EXTRA_NAVIGATION_ITEM_ID";
+
+    private final static int TRANSITION_DURATION = 200;
+    private final static int BACKGROUND_TRANSITION_DURATION = 200;
+    private final static int FADE_IN_OUT_DURATION = 300;
+    private final static int INVALID_INTEGER = -1;
 
     @Nullable
     ImageView imageView;
@@ -45,8 +60,12 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
     ViewGroup galleryImageViewLayout;
     @Nullable
     GestureDetectorCompat gestureDetector;
+    @Nullable
+    Toolbar toolbar;
+    @Nullable
+    BottomNavigationView bottomNavigationView;
 
-    boolean gallerySystemUiToggle = false;
+    boolean gallerySystemUiToggle = true;
     int beforeTransitBackgroundColor = Color.WHITE;
     int currentBackgroundColor = Color.BLACK;
 
@@ -56,7 +75,14 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().requestFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+        postponeEnterTransition();
+
+        // Force trigger System UI cover on this Activity
+        hideSystemUI();
+        showSystemUI();
+
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
 
         Fade fade = new Fade();
         fade.excludeTarget(android.R.id.statusBarBackground, true);
@@ -72,17 +98,43 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
 
     private void setupViews() {
         imageView = findViewById(R.id.showing_image_view);
+        scheduleStartPostponedTransition(imageView);
+
         galleryImageViewLayout = findViewById(R.id.showing_image_view_layout);
+        bottomNavigationView = findViewById(R.id.navigation_view);
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)
+                bottomNavigationView.getLayoutParams();
+        params.setMargins(0, 0, 0, getNavigationBarHeight());
+        bottomNavigationView.setLayoutParams(params);
+        bottomNavigationView.setOnNavigationItemSelectedListener(this);
+
+        toolbar = findViewById(R.id.my_toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+        params = (ViewGroup.MarginLayoutParams)
+                toolbar.getLayoutParams();
+        params.setMargins(0, getStatusBarHeight(), 0, 0);
+        toolbar.setLayoutParams(params);
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             transitionName = bundle.getString(ARGS_TRANSITION_NAME);
             beforeTransitBackgroundColor
                     = bundle.getInt(ARGS_TRANSITION_BEFORE_BACKGROUND_COLOR, Color.WHITE);
-            imageView.setTransitionName(transitionName);
-
+            int menuResId = bundle.getInt(ARGS_BOTTOM_MENU_RES_ID, INVALID_INTEGER);
             final String url = bundle.getString(ARGS_IMAGE_URL);
             final Bitmap bitmap = bundle.getParcelable(ARGS_IMAGE_BITMAP);
+
+            if (menuResId != INVALID_INTEGER) {
+                bottomNavigationView.inflateMenu(menuResId);
+            } else {
+                bottomNavigationView.setEnabled(false);
+                bottomNavigationView.setVisibility(View.GONE);
+            }
+
+            imageView.setTransitionName(transitionName);
             if (bitmap != null) {
                 imageView.setImageBitmap(bitmap);
 
@@ -114,16 +166,11 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
             }
         }
 
-        imageView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return gestureDetector.onTouchEvent(event);
-            }
-        });
+        galleryImageViewLayout.setClickable(true);
         galleryImageViewLayout.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                return true;
+                return gestureDetector.onTouchEvent(event);
             }
         });
         gestureDetector = new GestureDetectorCompat(this,
@@ -134,9 +181,11 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
                 if (galleryImageViewLayout != null) {
                     if (gallerySystemUiToggle) {
                         hideSystemUI();
+                        hideAppNavigationBar();
                     }
                     else {
                         showSystemUI();
+                        showAppNavigationBar();
                     }
                     gallerySystemUiToggle = !gallerySystemUiToggle;
                 }
@@ -151,8 +200,26 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
 
-        hideSystemUI();
+    private int getNavigationBarHeight() {
+        Resources resources = this.getResources();
+        int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return  resources.getDimensionPixelSize(resourceId);
+        }
+
+        return 0;
+    }
+
+    private int getStatusBarHeight() {
+        Resources resources = this.getResources();
+        int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return  resources.getDimensionPixelSize(resourceId);
+        }
+
+        return 0;
     }
 
     void extractAndApplyColor(@NonNull final Bitmap bitmap) {
@@ -180,29 +247,91 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
     }
 
     void hideSystemUI() {
+        // Set the IMMERSIVE flag.
+        // Set the content to appear under the system bars so that the content
+        // doesn't resize when the system bars hide and show.
         getWindow().getDecorView().setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        );
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 
     void showSystemUI() {
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+    }
+
+    Animator.AnimatorListener hideListener = new Animator.AnimatorListener() {
+
+        @Override
+        public void onAnimationStart(Animator animator) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animator) {
+            bottomNavigationView.setVisibility(View.GONE);
+            toolbar.setVisibility(View.GONE);
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animator) {
+
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animator) {
+
+        }
+    };
+
+    Animator.AnimatorListener showListener = new Animator.AnimatorListener() {
+
+        @Override
+        public void onAnimationStart(Animator animator) {
+            bottomNavigationView.setVisibility(View.VISIBLE);
+            toolbar.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animator) {
+        }
+
+        @Override
+        public void onAnimationCancel(Animator animator) {
+
+        }
+
+        @Override
+        public void onAnimationRepeat(Animator animator) {
+
+        }
+    };
+
+    void hideAppNavigationBar() {
+        bottomNavigationView.animate().alpha(0f).setDuration(FADE_IN_OUT_DURATION);
+        toolbar.animate().alpha(0f).setDuration(FADE_IN_OUT_DURATION).setListener(hideListener);
+        bottomNavigationView.setEnabled(false);
+        bottomNavigationView.setClickable(false);
+        toolbar.setEnabled(false);
+    }
+
+    void showAppNavigationBar() {
+        bottomNavigationView.animate().alpha(1f).setDuration(FADE_IN_OUT_DURATION);
+        toolbar.animate().alpha(1f).setDuration(FADE_IN_OUT_DURATION).setListener(showListener);
+        bottomNavigationView.setEnabled(true);
+        bottomNavigationView.setClickable(true);
+        toolbar.setEnabled(true);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (galleryImageViewLayout != null) {
-            gallerySystemUiToggle = false;
-            hideSystemUI();
-        }
     }
 
     @Override
@@ -256,5 +385,33 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity {
         } else {
             view.setBackgroundColor(afterColor);
         }
+    }
+
+
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        final Intent intent = new Intent(ACTION_NAVIGATION_CLICKED);
+        intent.putExtra(EXTRA_NAVIGATION_ITEM_ID, item.getItemId());
+        sendBroadcast(intent);
+        return false;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                if (galleryImageViewLayout != null) {
+                    if (gallerySystemUiToggle) {
+                        onBackPressed();
+                    } else {
+                        showSystemUI();
+                        showAppNavigationBar();
+                    }
+                }
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
