@@ -1,6 +1,8 @@
 TwitterizedPhotoView
 =========
 
+[![Download](https://api.bintray.com/packages/lekaha/MavenRepo/TwitterizedPhotoView/images/download.svg)](https://bintray.com/lekaha/MavenRepo/TwitterizedPhotoView/_latestVersion)
+
 A view that shows the image with transition animation and the background color is extracting 
 from the image. The transition animation is moving and scaling the image from origin position to
   the center of screen, and scale the image to fit the width of screen. When showing the image the
