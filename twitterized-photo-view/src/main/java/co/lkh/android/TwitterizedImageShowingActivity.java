@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,9 +18,12 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.Toolbar;
 import android.transition.Fade;
 import android.transition.Transition;
@@ -30,6 +35,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.ImageView;
+import android.widget.RemoteViews;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -45,14 +51,21 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
     public final static String ARGS_TRANSITION_BEFORE_BACKGROUND_COLOR
         = "ARGS_TRANSITION_BEFORE_BACKGROUND_COLOR";
     public final static String ARGS_BOTTOM_MENU_RES_ID = "ARGS_BOTTOM_MENU_RES_ID";
+    public final static String ARGS_BOTTOM_REMOTE_VIEWS = "ARGS_BOTTOM_REMOTE_VIEWS";
 
     public final static String ACTION_NAVIGATION_CLICKED = "ACTION_NAVIGATION_CLICKED";
     public final static String EXTRA_NAVIGATION_ITEM_ID = "EXTRA_NAVIGATION_ITEM_ID";
+    public final static String EXTRA_NAVIGATION_ITEM_TITLE = "EXTRA_NAVIGATION_ITEM_TITLE";
 
     private final static int TRANSITION_DURATION = 200;
     private final static int BACKGROUND_TRANSITION_DURATION = 200;
+    private final static int BACKGROUND_COLOR_NAVIGATION_ALPHA = 127;
     private final static int FADE_IN_OUT_DURATION = 300;
     private final static int INVALID_INTEGER = -1;
+
+    static {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
 
     @Nullable
     ImageView imageView;
@@ -75,21 +88,23 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        postponeEnterTransition();
 
         // Force trigger System UI cover on this Activity
         hideSystemUI();
         showSystemUI();
 
+        // Avoid flash while transition from former Activity
+        postponeEnterTransition();
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        getWindow().getDecorView().setBackgroundColor(Color.TRANSPARENT);
 
+        // Using the fade effect for Activity transition
         Fade fade = new Fade();
         fade.excludeTarget(android.R.id.statusBarBackground, true);
         fade.excludeTarget(android.R.id.navigationBarBackground, true);
         fade.excludeTarget(R.id.showing_image_view, true);
         fade.setDuration(TRANSITION_DURATION);
-
         applyTransitionToWindow(getWindow(), fade, true, true, true, true, true);
 
         setContentView(R.layout.activity_twitterized_image_showing);
@@ -108,15 +123,22 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
         bottomNavigationView.setLayoutParams(params);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
 
-        toolbar = findViewById(R.id.my_toolbar);
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+        final Drawable upArrow = ContextCompat.getDrawable(this,
+                android.support.v7.appcompat.R.drawable.abc_ic_ab_back_material);
+        upArrow.setColorFilter(ContextCompat.getColor(this, android.R.color.white), PorterDuff
+                .Mode.SRC_ATOP);
+        getSupportActionBar().setHomeAsUpIndicator(upArrow);
+
         params = (ViewGroup.MarginLayoutParams)
                 toolbar.getLayoutParams();
         params.setMargins(0, getStatusBarHeight(), 0, 0);
         toolbar.setLayoutParams(params);
+
 
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
@@ -124,6 +146,7 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
             beforeTransitBackgroundColor
                     = bundle.getInt(ARGS_TRANSITION_BEFORE_BACKGROUND_COLOR, Color.WHITE);
             int menuResId = bundle.getInt(ARGS_BOTTOM_MENU_RES_ID, INVALID_INTEGER);
+            final RemoteViews remoteViews = bundle.getParcelable(ARGS_BOTTOM_REMOTE_VIEWS);
             final String url = bundle.getString(ARGS_IMAGE_URL);
             final Bitmap bitmap = bundle.getParcelable(ARGS_IMAGE_BITMAP);
 
@@ -132,6 +155,11 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
             } else {
                 bottomNavigationView.setEnabled(false);
                 bottomNavigationView.setVisibility(View.GONE);
+
+                if (remoteViews != null) {
+                    View view = remoteViews.apply(this, galleryImageViewLayout);
+                    galleryImageViewLayout.addView(view);
+                }
             }
 
             imageView.setTransitionName(transitionName);
@@ -227,6 +255,11 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
         currentBackgroundColor = extractColor(bitmap);
         applyViewTransitBackgroundColor(galleryImageViewLayout,
                 beforeTransitBackgroundColor, currentBackgroundColor);
+
+//        int semiTransparentColor =
+//                currentBackgroundColor | (BACKGROUND_COLOR_NAVIGATION_ALPHA & 0xff) << 24;
+//        toolbar.setBackgroundColor(semiTransparentColor);
+//        bottomNavigationView.setBackgroundColor(semiTransparentColor);
     }
 
     /**
@@ -393,8 +426,9 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         final Intent intent = new Intent(ACTION_NAVIGATION_CLICKED);
         intent.putExtra(EXTRA_NAVIGATION_ITEM_ID, item.getItemId());
-        sendBroadcast(intent);
-        return false;
+        intent.putExtra(EXTRA_NAVIGATION_ITEM_TITLE, item.getTitle());
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        return true;
     }
 
     @Override

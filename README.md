@@ -13,7 +13,7 @@ Download
 Use Gradle:
 ```
 dependencies {
-  compile 'com.github.lekaha:twitterized-photo-view:0.0.3'
+  compile 'com.github.lekaha:twitterized-photo-view:0.0.4'
 }
 ```
     
@@ -51,6 +51,13 @@ ActivityCompat.startActivity(MainActivity.this, intent, options.toBundle());
 
 ```
 
+### More
+  
+- Attach the navigation by given the Menu resource ID.
+```java
+intent.putExtra(TwitterizedImageShowingActivity.ARGS_BOTTOM_MENU_RES_ID,
+                        R.menu.navigation);
+```
 Sample
 =========
 ![Sample screenshot1](/screenshots/show.gif)

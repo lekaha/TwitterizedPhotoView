@@ -4,14 +4,6 @@
              android:id="@+id/showing_image_view_layout"
              android:layout_width="match_parent"
              android:layout_height="match_parent">
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/my_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
-        android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
     <ImageView
         android:id="@+id/showing_image_view"
@@ -20,6 +12,15 @@
         android:layout_gravity="center_vertical"
         android:background="@android:color/transparent"
         android:transitionName="@string/twitterzied_image_showing_transition_name"/>
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/navigation_view"

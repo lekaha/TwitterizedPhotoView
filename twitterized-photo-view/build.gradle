@@ -10,7 +10,7 @@ android {
         targetSdkVersion 26
         versionCode Integer.parseInt(VERSION_CODE)
         versionName VERSION_NAME
-
+        vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
