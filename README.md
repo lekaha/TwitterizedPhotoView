@@ -58,6 +58,25 @@ ActivityCompat.startActivity(MainActivity.this, intent, options.toBundle());
 intent.putExtra(TwitterizedImageShowingActivity.ARGS_BOTTOM_MENU_RES_ID,
                         R.menu.navigation);
 ```
+
+Notice
+=========
+This library is using Google Android Support Library and the version is `26.0.0`. 
+Please check it out your build environment that should be compatible with this version.
+You may need to add Google's maven repository in your `build.gradle`
+
+```
+allprojects {
+    repositories {
+        ...
+        maven {
+            url "https://maven.google.com"
+        }
+    }
+}
+```
+For more detail please refer to [Support Library Setup](https://developer.android.com/topic/libraries/support-library/setup.html)
+
 Sample
 =========
 ![Sample screenshot1](/screenshots/show.gif)
