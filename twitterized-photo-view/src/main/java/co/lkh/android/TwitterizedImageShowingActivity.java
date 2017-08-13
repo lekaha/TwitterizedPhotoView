@@ -27,18 +27,17 @@ import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.Toolbar;
 import android.transition.Fade;
 import android.transition.Transition;
-import android.view.GestureDetector;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
-import android.widget.ImageView;
 import android.widget.RemoteViews;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.github.chrisbanes.photoview.OnViewTapListener;
+import com.github.chrisbanes.photoview.PhotoView;
 
 import co.lkh.android.util.PaletteUtil;
 
@@ -68,7 +67,7 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
     }
 
     @Nullable
-    ImageView imageView;
+    PhotoView imageView;
     @Nullable
     ViewGroup galleryImageViewLayout;
     @Nullable
@@ -84,6 +83,8 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
 
     @Nullable
     String transitionName;
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -107,7 +108,9 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
         fade.setDuration(TRANSITION_DURATION);
         applyTransitionToWindow(getWindow(), fade, true, true, true, true, true);
 
+//        BigImageViewer.initialize(new CustomImageLoader(this.getApplicationContext()));
         setContentView(R.layout.activity_twitterized_image_showing);
+
         setupViews();
     }
 
@@ -185,27 +188,17 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
                     }
                 };
                 Glide.with(getApplicationContext())
-                        .asBitmap()
-                        .load(url)
-                        .into(target);
+                                .asBitmap()
+                                .load(url)
+                                .into(target);
             }
             else {
                 throw new IllegalArgumentException("lack needed arguments");
             }
         }
-
-        galleryImageViewLayout.setClickable(true);
-        galleryImageViewLayout.setOnTouchListener(new View.OnTouchListener() {
+        imageView.setOnViewTapListener(new OnViewTapListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return gestureDetector.onTouchEvent(event);
-            }
-        });
-        gestureDetector = new GestureDetectorCompat(this,
-            new GestureDetector.SimpleOnGestureListener() {
-
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
+            public void onViewTap(View view, float x, float y) {
                 if (galleryImageViewLayout != null) {
                     if (gallerySystemUiToggle) {
                         hideSystemUI();
@@ -217,15 +210,6 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
                     }
                     gallerySystemUiToggle = !gallerySystemUiToggle;
                 }
-                return true;
-            }
-
-            @Override
-            public boolean onDoubleTap(MotionEvent e) {
-                if (galleryImageViewLayout != null) {
-                    hideSystemUI();
-                }
-                return true;
             }
         });
     }

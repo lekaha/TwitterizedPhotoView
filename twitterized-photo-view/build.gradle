@@ -32,6 +32,8 @@ dependencies {
     compile deps.support_palette
     testCompile deps.junit
 
+    compile deps.bigimageview
+
     compile deps.glide
     annotationProcessor deps.glide_compile
 }
