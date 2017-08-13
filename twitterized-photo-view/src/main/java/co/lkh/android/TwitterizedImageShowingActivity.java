@@ -2,14 +2,17 @@
 package co.lkh.android;
 
 import android.animation.Animator;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -38,9 +41,19 @@ import android.widget.ImageView;
 import android.widget.RemoteViews;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.davemorrissey.labs.subscaleview.ImageSource;
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.github.piasy.biv.BigImageViewer;
+import com.github.piasy.biv.loader.ImageLoader;
+import com.github.piasy.biv.view.BigImageView;
+
+import java.io.File;
 
 import co.lkh.android.util.PaletteUtil;
+
+import static android.R.string.no;
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 public class TwitterizedImageShowingActivity extends AppCompatActivity
@@ -68,7 +81,7 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
     }
 
     @Nullable
-    ImageView imageView;
+    BigImageView imageView;
     @Nullable
     ViewGroup galleryImageViewLayout;
     @Nullable
@@ -84,6 +97,8 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
 
     @Nullable
     String transitionName;
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -107,7 +122,9 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
         fade.setDuration(TRANSITION_DURATION);
         applyTransitionToWindow(getWindow(), fade, true, true, true, true, true);
 
+        BigImageViewer.initialize(new CustomImageLoader(this.getApplicationContext()));
         setContentView(R.layout.activity_twitterized_image_showing);
+
         setupViews();
     }
 
@@ -164,7 +181,7 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
 
             imageView.setTransitionName(transitionName);
             if (bitmap != null) {
-                imageView.setImageBitmap(bitmap);
+//                imageView.setImageBitmap(bitmap);
 
                 // Push the task to the end of queue that could avoid stuck the main thread
                 // at the moment.
@@ -175,19 +192,7 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
                     }
                 });
             } else if (url != null) {
-                final SimpleTarget<Bitmap> target = new SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(Bitmap resource,
-                                                com.bumptech.glide.request.transition.
-                                                        Transition<? super Bitmap> transition) {
-                        imageView.setImageBitmap(resource);
-                        extractAndApplyColor(resource);
-                    }
-                };
-                Glide.with(getApplicationContext())
-                        .asBitmap()
-                        .load(url)
-                        .into(target);
+                imageView.showImage(Uri.parse(url));
             }
             else {
                 throw new IllegalArgumentException("lack needed arguments");
@@ -222,10 +227,7 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
 
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                if (galleryImageViewLayout != null) {
-                    hideSystemUI();
-                }
-                return true;
+                return false;
             }
         });
     }
@@ -447,5 +449,72 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    class CustomImageLoader implements ImageLoader {
+        private final RequestManager requestManager;
+
+        CustomImageLoader(Context context) {
+            requestManager = Glide.with(context);
+        }
+
+        @Override
+        public void loadImage(Uri uri, final Callback callback) {
+            requestManager
+                    .asFile()
+                    .load(uri)
+                    .into(new SimpleTarget<File>() {
+                        @Override
+                        public void onResourceReady(File resource,
+                                                    com.bumptech.glide.request.transition.
+                                                            Transition<? super File> transition) {
+//                            ImageSource is = ImageSource.uri(Uri.fromFile(resource));
+
+                            callback.onCacheHit(resource);
+                            callback.onSuccess(resource);
+
+                            Bitmap bitmap = BitmapFactory.decodeFile(resource.getPath());
+                            extractAndApplyColor(bitmap);
+                        }
+
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {
+                            super.onLoadCleared(placeholder);
+                            callback.onFinish();
+                        }
+
+                        @Override
+                        public void onLoadStarted(@Nullable Drawable placeholder) {
+                            super.onLoadStarted(placeholder);
+                            callback.onStart();
+                        }
+
+                        @Override
+                        public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                            super.onLoadFailed(errorDrawable);
+                            callback.onFail(new Exception("onLoadFailed"));
+                        }
+                    });
+
+        }
+
+        @Override
+        public View showThumbnail(BigImageView parent, Uri thumbnail, int scaleType) {
+            return null;
+        }
+
+        @Override
+        public void prefetch(Uri uri) {
+            final SimpleTarget<File> target = new SimpleTarget<File>() {
+                @Override
+                public void onResourceReady(File resource,
+                                            com.bumptech.glide.request.transition.
+                                                    Transition<? super File> transition) {
+
+                }
+            };
+
+//            requestManager.asFile().load(uri).into(target);
+        }
     }
 }

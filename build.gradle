@@ -51,6 +51,8 @@ ext.deps = [
         espresso: 'com.android.support.test.espresso:espresso-core:2.2.2',
         espresso_intent: 'com.android.support.test.espresso:espresso-intents:2.2.2',
         junit: 'junit:junit:4.12',
+
+        bigimageview: 'com.github.piasy:BigImageViewer:1.3.2',
 ]
 
 allprojects {
@@ -58,6 +60,9 @@ allprojects {
         jcenter()
         maven {
             url "https://maven.google.com"
+        }
+        maven {
+            url  "http://dl.bintray.com/piasy/maven"
         }
     }
 }
