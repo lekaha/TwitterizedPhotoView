@@ -5,19 +5,11 @@
              android:layout_width="match_parent"
              android:layout_height="match_parent">
 
-    <!--<ImageView-->
-        <!--android:id="@+id/showing_image_view"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:layout_gravity="center_vertical"-->
-        <!--android:background="@android:color/transparent"-->
-        <!--android:transitionName="@string/twitterzied_image_showing_transition_name"/>-->
-    <com.github.piasy.biv.view.BigImageView
+    
+    <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/showing_image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:failureImageInitScaleType="center"
-        app:optimizeDisplay="false"
         android:transitionName="@string/twitterzied_image_showing_transition_name"/>
 
     <android.support.v7.widget.Toolbar
