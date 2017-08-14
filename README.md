@@ -8,6 +8,13 @@ from the image. The transition animation is moving and scaling the image from or
   the center of screen, and scale the image to fit the width of screen. When showing the image the
   background color of the screen will be determine by extracting the image's prominent dark color.
   
+Pre-requisites
+=========
+- Android SDK 26
+- Android Build Tools v26.0.0
+- Android Support Repository ( check [**importance**](#notice))
+- Android Support Library v26.0.0
+
 Download
 =========
 Use Gradle:
