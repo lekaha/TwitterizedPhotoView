@@ -13,7 +13,7 @@ Download
 Use Gradle:
 ```
 dependencies {
-  compile 'com.github.lekaha:twitterized-photo-view:0.0.4'
+  compile 'com.github.lekaha:twitterized-photo-view:0.0.5'
 }
 ```
     
