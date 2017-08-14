@@ -64,14 +64,15 @@ Notice
 This library is using Google Android Support Library and the version is `26.0.0`. 
 Please check it out your build environment that should be compatible with this version.
 You may need to add Google's maven repository in your `build.gradle`
+And, using [PhotoView](https://github.com/chrisbanes/PhotoView/) at the moment it is needed 
+to add one more maven repository,  
 
 ```
 allprojects {
     repositories {
         ...
-        maven {
-            url "https://maven.google.com"
-        }
+        maven { url "https://maven.google.com" }
+        maven { url "https://jitpack.io" }
     }
 }
 ```
