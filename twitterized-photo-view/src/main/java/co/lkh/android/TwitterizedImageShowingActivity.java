@@ -2,6 +2,7 @@
 package co.lkh.android;
 
 import android.animation.Animator;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -20,7 +21,6 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.AppCompatDelegate;
@@ -58,7 +58,7 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
 
     private final static int TRANSITION_DURATION = 200;
     private final static int BACKGROUND_TRANSITION_DURATION = 200;
-    private final static int BACKGROUND_COLOR_NAVIGATION_ALPHA = 127;
+    private final static int BACKGROUND_COLOR_NAVIGATION_ALPHA = 128;
     private final static int FADE_IN_OUT_DURATION = 300;
     private final static int INVALID_INTEGER = -1;
 
@@ -66,15 +66,13 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
 
-    @Nullable
+    @NonNull
     PhotoView imageView;
-    @Nullable
+    @NonNull
     ViewGroup galleryImageViewLayout;
-    @Nullable
-    GestureDetectorCompat gestureDetector;
-    @Nullable
+    @NonNull
     Toolbar toolbar;
-    @Nullable
+    @NonNull
     BottomNavigationView bottomNavigationView;
 
     boolean gallerySystemUiToggle = true;
@@ -108,7 +106,6 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
         fade.setDuration(TRANSITION_DURATION);
         applyTransitionToWindow(getWindow(), fade, true, true, true, true, true);
 
-//        BigImageViewer.initialize(new CustomImageLoader(this.getApplicationContext()));
         setContentView(R.layout.activity_twitterized_image_showing);
 
         setupViews();
@@ -116,26 +113,38 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
 
     private void setupViews() {
         imageView = findViewById(R.id.showing_image_view);
+        assert imageView != null;
         scheduleStartPostponedTransition(imageView);
 
         galleryImageViewLayout = findViewById(R.id.showing_image_view_layout);
+        assert galleryImageViewLayout != null;
         bottomNavigationView = findViewById(R.id.navigation_view);
+        assert bottomNavigationView != null;
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)
                 bottomNavigationView.getLayoutParams();
         params.setMargins(0, 0, 0, getNavigationBarHeight());
+        bottomNavigationView.setPadding(0, 0, 0, 0);
         bottomNavigationView.setLayoutParams(params);
         bottomNavigationView.setOnNavigationItemSelectedListener(this);
+        bottomNavigationView.setElevation(0);
 
         toolbar = findViewById(R.id.toolbar);
+        assert toolbar != null;
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+
+        final ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
+        actionBar.setDisplayShowHomeEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayOptions(0, ActionBar.DISPLAY_SHOW_TITLE);
+        actionBar.setElevation(0);
+
+        @SuppressLint("PrivateResource")
         final Drawable upArrow = ContextCompat.getDrawable(this,
                 android.support.v7.appcompat.R.drawable.abc_ic_ab_back_material);
         upArrow.setColorFilter(ContextCompat.getColor(this, android.R.color.white), PorterDuff
                 .Mode.SRC_ATOP);
-        getSupportActionBar().setHomeAsUpIndicator(upArrow);
+        actionBar.setHomeAsUpIndicator(upArrow);
 
         params = (ViewGroup.MarginLayoutParams)
                 toolbar.getLayoutParams();
@@ -188,9 +197,9 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
                     }
                 };
                 Glide.with(getApplicationContext())
-                                .asBitmap()
-                                .load(url)
-                                .into(target);
+                    .asBitmap()
+                    .load(url)
+                    .into(target);
             }
             else {
                 throw new IllegalArgumentException("lack needed arguments");
@@ -235,15 +244,20 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
     }
 
     void extractAndApplyColor(@NonNull final Bitmap bitmap) {
+
         // Change the background with prominent color from the image
         currentBackgroundColor = extractColor(bitmap);
         applyViewTransitBackgroundColor(galleryImageViewLayout,
                 beforeTransitBackgroundColor, currentBackgroundColor);
 
-//        int semiTransparentColor =
-//                currentBackgroundColor | (BACKGROUND_COLOR_NAVIGATION_ALPHA & 0xff) << 24;
-//        toolbar.setBackgroundColor(semiTransparentColor);
-//        bottomNavigationView.setBackgroundColor(semiTransparentColor);
+        // Ref to https://www.viget.com/articles/equating-color-and-transparency
+        int semiTransparentColor =
+                (BACKGROUND_COLOR_NAVIGATION_ALPHA & 0xff) << 24
+                        | (currentBackgroundColor & 0x00ffffff);
+        toolbar.setBackgroundColor(semiTransparentColor);
+        bottomNavigationView.setBackgroundColor(semiTransparentColor);
+        getWindow().setStatusBarColor(semiTransparentColor);
+        getWindow().setNavigationBarColor(semiTransparentColor);
     }
 
     /**
@@ -354,10 +368,9 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
     @Override
     public void onPause() {
         super.onPause();
-        if (galleryImageViewLayout != null) {
-            gallerySystemUiToggle = true;
-            showSystemUI();
-        }
+        gallerySystemUiToggle = true;
+        showSystemUI();
+
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setBackgroundDrawable(
                 new ColorDrawable(Color.TRANSPARENT));
@@ -396,12 +409,8 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
 
         // Transit the background from black
         TransitionDrawable trans = new TransitionDrawable(colors);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            view.setBackground(trans);
-            trans.startTransition(BACKGROUND_TRANSITION_DURATION);
-        } else {
-            view.setBackgroundColor(afterColor);
-        }
+        view.setBackground(trans);
+        trans.startTransition(BACKGROUND_TRANSITION_DURATION);
     }
 
 
@@ -420,13 +429,11 @@ public class TwitterizedImageShowingActivity extends AppCompatActivity
         switch (item.getItemId()) {
             // Respond to the action bar's Up/Home button
             case android.R.id.home:
-                if (galleryImageViewLayout != null) {
-                    if (gallerySystemUiToggle) {
-                        onBackPressed();
-                    } else {
-                        showSystemUI();
-                        showAppNavigationBar();
-                    }
+                if (gallerySystemUiToggle) {
+                    onBackPressed();
+                } else {
+                    showSystemUI();
+                    showAppNavigationBar();
                 }
                 return true;
         }
